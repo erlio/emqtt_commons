@@ -92,6 +92,9 @@ parse_frame(Bin, #mqtt_frame_fixed{ type = Type,
                false ->
                     {error, protocol_header_corrupt}
             end;
+        {?CONNACK, <<FrameBin:Length/binary, Rest/binary>>} ->
+            <<_:8, ReturnCode:8/big>> = FrameBin,
+            wrap(Fixed, #mqtt_frame_connack{return_code=ReturnCode}, <<>>, Rest);
         {?PUBLISH, <<FrameBin:Length/binary, Rest/binary>>} ->
             {TopicName, Rest1} = parse_utf(FrameBin),
             {MessageId, Payload} = case Qos of
@@ -121,6 +124,15 @@ parse_frame(Bin, #mqtt_frame_fixed{ type = Type,
             Topics = parse_topics(Subs, Rest1, []),
             wrap(Fixed, #mqtt_frame_subscribe { message_id  = MessageId,
                                                 topic_table = Topics }, Rest);
+        {?SUBACK, <<FrameBin:Length/binary, Rest/binary>>} ->
+            <<MessageId:16/big, Rest1/binary>> = FrameBin,
+            QoSTable = parse_acks(Rest1, []),
+            wrap(Fixed, #mqtt_frame_suback { message_id  = MessageId,
+                                             qos_table = QoSTable }, Rest);
+        {?UNSUBACK, <<FrameBin:Length/binary, Rest/binary>>} ->
+            <<MessageId:16/big>> = FrameBin,
+            wrap(Fixed, #mqtt_frame_suback { message_id  = MessageId,
+                                                qos_table = [] }, Rest);
         {Minimal, Rest}
           when Minimal =:= ?DISCONNECT orelse Minimal =:= ?PINGREQ ->
             Length = 0,
@@ -140,6 +152,12 @@ parse_topics(?SUBSCRIBE = Sub, Bin, Topics) ->
 parse_topics(?UNSUBSCRIBE = Sub, Bin, Topics) ->
     {Name, <<Rest/binary>>} = parse_utf(Bin),
     parse_topics(Sub, Rest, [#mqtt_topic { name = Name } | Topics]).
+
+parse_acks(<<>>, Acks) ->
+    Acks;
+parse_acks(<<_:6, QoS:2, Rest/binary>>, Acks) ->
+    parse_acks(Rest, [QoS | Acks]).
+
 
 wrap(Fixed, Variable, Payload, Rest) ->
     {ok, #mqtt_frame { variable = Variable, fixed = Fixed, payload = Payload }, Rest}.
