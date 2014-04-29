@@ -253,6 +253,14 @@ serialise_variable(#mqtt_frame_fixed { type = ?SUBSCRIBE } = Fixed,
     PayloadBin = list_to_binary(lists:foldl(F, [], TopicTable)),
     serialise_fixed(Fixed, MessageIdBin, PayloadBin);
 
+serialise_variable(#mqtt_frame_fixed {type = ?UNSUBSCRIBE } = Fixed,
+                   #mqtt_frame_subscribe { message_id = MessageId,
+                                           topic_table = Topics },
+                   _) ->
+    MessageIdBin = <<MessageId:16/big>>,
+	PayloadBin = list_to_binary([serialise_utf(T) || T <- Topics]),
+    serialise_variable(Fixed, MessageIdBin, PayloadBin);
+
 serialise_variable(#mqtt_frame_fixed { type = ?CONNECT } = Fixed,
                    #mqtt_frame_connect{ proto_ver = ProtoVer,
                                         username = Username,
