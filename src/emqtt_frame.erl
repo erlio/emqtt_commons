@@ -134,7 +134,7 @@ parse_frame(Bin, #mqtt_frame_fixed{ type = Type,
             wrap(Fixed, #mqtt_frame_suback { message_id  = MessageId,
                                                 qos_table = [] }, Rest);
         {Minimal, Rest}
-          when Minimal =:= ?DISCONNECT orelse Minimal =:= ?PINGREQ ->
+          when Minimal =:= ?DISCONNECT orelse Minimal =:= ?PINGREQ orelse Minimal =:= ?PINGRESP ->
             Length = 0,
             wrap(Fixed, Rest);
         {_, TooShortBin} ->
