@@ -23,7 +23,8 @@
 -export([serialise/1]).
 
 -define(RESERVED, 0).
--define(PROTOCOL_MAGIC, "MQIsdp").
+-define(PROTOCOL_MAGIC_31, "MQIsdp").
+-define(PROTOCOL_MAGIC_311, "MQTT").
 -define(MAX_LEN, 16#fffffff).
 -define(HIGHBIT, 2#10000000).
 -define(LOWBITS, 2#01111111).
@@ -74,7 +75,8 @@ parse_frame(Bin, #mqtt_frame_fixed{ type = Type,
             {WillMsg,   Rest6} = parse_msg(Rest5, WillFlag),
             {UserName,  Rest7} = parse_utf(Rest6, UsernameFlag),
             {PasssWord, <<>>}  = parse_utf(Rest7, PasswordFlag),
-            case ProtocolMagic == ?PROTOCOL_MAGIC of
+            case (ProtocolMagic == ?PROTOCOL_MAGIC_31)
+                 orelse (ProtocolMagic == ?PROTOCOL_MAGIC_311) of
                 true ->
                     wrap(Fixed,
                          #mqtt_frame_connect{
