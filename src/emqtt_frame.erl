@@ -25,6 +25,7 @@
 -define(RESERVED, 0).
 -define(PROTOCOL_MAGIC_31, "MQIsdp").
 -define(PROTOCOL_MAGIC_311, "MQTT").
+-define(PROTOCOL_MAGIC_131, "MQIsdp131"). %% used for bridges
 -define(MAX_LEN, 16#fffffff).
 -define(HIGHBIT, 2#10000000).
 -define(LOWBITS, 2#01111111).
@@ -76,7 +77,9 @@ parse_frame(Bin, #mqtt_frame_fixed{ type = Type,
             {UserName,  Rest7} = parse_utf(Rest6, UsernameFlag),
             {PasssWord, <<>>}  = parse_utf(Rest7, PasswordFlag),
             case (ProtocolMagic == ?PROTOCOL_MAGIC_31)
-                 orelse (ProtocolMagic == ?PROTOCOL_MAGIC_311) of
+                 orelse (ProtocolMagic == ?PROTOCOL_MAGIC_311)
+                 orelse (ProtocolMagic == ?PROTOCOL_MAGIC_131)
+            of
                 true ->
                     wrap(Fixed,
                          #mqtt_frame_connect{
@@ -280,7 +283,7 @@ serialise_variable(#mqtt_frame_fixed { type = ?CONNECT } = Fixed,
                                         will_topic = WillTopic,
                                         will_msg = WillMsg},
                    <<>>) ->
-    ProtoName = <<"MQIsdp">>,
+    ProtoName = list_to_binary(proto_name(ProtoVer)),
     UsernameFlag = case Username of
                        undefined -> false;
                        U when is_binary(U) or is_list(U) -> true
@@ -356,5 +359,9 @@ opt(false)                -> 0;
 opt(true)                 -> 1;
 opt(X) when is_integer(X) -> X.
 
-
+proto_name(3) -> ?PROTOCOL_MAGIC_31;
+proto_name(4) -> ?PROTOCOL_MAGIC_311;
+proto_name(131) -> ?PROTOCOL_MAGIC_31;
+proto_name(141) -> ?PROTOCOL_MAGIC_311;
+proto_name(_) -> error.
 
