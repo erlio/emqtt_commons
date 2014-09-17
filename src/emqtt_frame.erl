@@ -283,12 +283,12 @@ serialise_variable(#mqtt_frame_fixed { type = ?CONNECT } = Fixed,
     ProtoName = <<"MQIsdp">>,
     UsernameFlag = case Username of
                        undefined -> false;
-                       U when is_binary(U) -> true
+                       U when is_binary(U) or is_list(U) -> true
                    end,
 
     PasswordFlag = case Password of
                        undefined -> false;
-                       P when is_binary(P) -> true
+                       P when is_binary(P) or is_list(P) -> true
                    end,
 
     Bin = <<(byte_size(ProtoName)):16/big-unsigned-integer,
