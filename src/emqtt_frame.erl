@@ -23,7 +23,8 @@
 -export([serialise/1]).
 
 -define(RESERVED, 0).
--define(PROTOCOL_MAGIC, "MQIsdp").
+-define(PROTOCOL_MAGIC_31, "MQIsdp").
+-define(PROTOCOL_MAGIC_311, "MQTT").
 -define(MAX_LEN, 16#fffffff).
 -define(HIGHBIT, 2#10000000).
 -define(LOWBITS, 2#01111111).
@@ -69,12 +70,13 @@ parse_frame(Bin, #mqtt_frame_fixed{ type = Type,
               _Reserved    : 1,
               KeepAlive    : 16/big,
               Rest3/binary>>   = Rest2,
-            {ClientId,  Rest4} = parse_utf(Rest3),
+            {ClientId,  Rest4} = parse_client_id(Rest3),
             {WillTopic, Rest5} = parse_utf(Rest4, WillFlag),
             {WillMsg,   Rest6} = parse_msg(Rest5, WillFlag),
             {UserName,  Rest7} = parse_utf(Rest6, UsernameFlag),
             {PasssWord, <<>>}  = parse_utf(Rest7, PasswordFlag),
-            case ProtocolMagic == ?PROTOCOL_MAGIC of
+            case (ProtocolMagic == ?PROTOCOL_MAGIC_31)
+                 orelse (ProtocolMagic == ?PROTOCOL_MAGIC_311) of
                 true ->
                     wrap(Fixed,
                          #mqtt_frame_connect{
@@ -134,7 +136,7 @@ parse_frame(Bin, #mqtt_frame_fixed{ type = Type,
             wrap(Fixed, #mqtt_frame_suback { message_id  = MessageId,
                                                 qos_table = [] }, Rest);
         {Minimal, Rest}
-          when Minimal =:= ?DISCONNECT orelse Minimal =:= ?PINGREQ ->
+          when Minimal =:= ?DISCONNECT orelse Minimal =:= ?PINGREQ orelse Minimal =:= ?PINGRESP ->
             Length = 0,
             wrap(Fixed, Rest);
         {_, TooShortBin} ->
@@ -178,6 +180,10 @@ parse_msg(Bin, 0) ->
     {undefined, Bin};
 parse_msg(<<Len:16/big, Msg:Len/binary, Rest/binary>>, _) ->
     {Msg, Rest}.
+
+parse_client_id(<<>>) -> {missing, <<>>};
+parse_client_id(<<0,0>>) -> {empty, <<>>};
+parse_client_id(Bin) -> parse_utf(Bin).
 
 bool(0) -> false;
 bool(1) -> true.
