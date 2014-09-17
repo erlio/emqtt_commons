@@ -19,8 +19,7 @@
 %% Copyright (c) 2007-2012 VMware, Inc.  All rights reserved.
 %%
 
--define(MQTT_PROTO_MAJOR_3, 3).
--define(MQTT_PROTO_MAJOR_4, 4).
+-define(MQTT_PROTO_MAJOR, 3).
 -define(MQTT_PROTO_MINOR, 1).
 
 %% frame types
