@@ -268,7 +268,7 @@ serialise_variable(#mqtt_frame_fixed {type = ?UNSUBSCRIBE } = Fixed,
                    _) ->
     MessageIdBin = <<MessageId:16/big>>,
 	PayloadBin = list_to_binary([serialise_utf(T) || T <- Topics]),
-    serialise_variable(Fixed, MessageIdBin, PayloadBin);
+    serialise_fixed(Fixed, MessageIdBin, PayloadBin);
 
 serialise_variable(#mqtt_frame_fixed { type = ?CONNECT } = Fixed,
                    #mqtt_frame_connect{ proto_ver = ProtoVer,
@@ -300,7 +300,7 @@ serialise_variable(#mqtt_frame_fixed { type = ?CONNECT } = Fixed,
             (opt(UsernameFlag)):1/integer,
             (opt(PasswordFlag)):1/integer,
             (opt(WillRetain)):1/integer,
-            (opt(WillQos)):2/integer,
+            WillQos:2/integer,
             (opt(WillFlag)):1/integer,
             (opt(CleanSess)):1/integer,
             0:1,
@@ -340,7 +340,7 @@ serialise_fixed(#mqtt_frame_fixed{ type   = Type,
     Len = size(VariableBin) + size(PayloadBin),
     true = (Len =< ?MAX_LEN),
     LenBin = serialise_len(Len),
-    <<Type:4, (opt(Dup)):1, (opt(Qos)):2, (opt(Retain)):1,
+    <<Type:4, (opt(Dup)):1, Qos:2, (opt(Retain)):1,
       LenBin/binary, VariableBin/binary, PayloadBin/binary>>.
 
 serialise_utf(String) ->
@@ -354,14 +354,11 @@ serialise_len(N) when N =< ?LOWBITS ->
 serialise_len(N) ->
     <<1:1, (N rem ?HIGHBIT):7, (serialise_len(N div ?HIGHBIT))/binary>>.
 
-opt(undefined)            -> ?RESERVED;
 opt(false)                -> 0;
 opt(true)                 -> 1;
 opt(X) when is_integer(X) -> X.
 
 proto_name(3) -> ?PROTOCOL_MAGIC_31;
 proto_name(4) -> ?PROTOCOL_MAGIC_311;
-proto_name(131) -> ?PROTOCOL_MAGIC_31;
-proto_name(141) -> ?PROTOCOL_MAGIC_311;
-proto_name(_) -> error.
+proto_name(131) -> ?PROTOCOL_MAGIC_31.
 
