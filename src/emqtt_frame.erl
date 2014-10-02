@@ -343,9 +343,6 @@ serialise_fixed(#mqtt_frame_fixed{ type   = Type,
     <<Type:4, (opt(Dup)):1, Qos:2, (opt(Retain)):1,
       LenBin/binary, VariableBin/binary, PayloadBin/binary>>.
 
-serialise_utf(null) ->
-    %% useful for testing protocol complience
-    <<>>;
 serialise_utf(String) ->
     StringBin = unicode:characters_to_binary(String),
     Len = size(StringBin),
