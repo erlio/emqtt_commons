@@ -124,7 +124,6 @@ parse_frame(Bin, #mqtt_frame_fixed{ type = Type,
             wrap(Fixed, #mqtt_frame_publish { message_id = MessageId }, Rest);
         {Subs, <<FrameBin:Length/binary, Rest/binary>>}
           when Subs =:= ?SUBSCRIBE orelse Subs =:= ?UNSUBSCRIBE ->
-            1 = Qos,
             <<MessageId:16/big, Rest1/binary>> = FrameBin,
             Topics = parse_topics(Subs, Rest1, []),
             wrap(Fixed, #mqtt_frame_subscribe { message_id  = MessageId,
