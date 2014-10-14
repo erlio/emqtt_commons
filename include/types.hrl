@@ -10,5 +10,3 @@
 -type connack_rc()      :: 0 | 1 | 2 | 3 | 4 | 5.
 -type proto_version()   :: 3 | 4 | 131.
 -type frame_type()      :: byte().
--type plugin_id()       :: {plugin, atom(), pid()}.
-
