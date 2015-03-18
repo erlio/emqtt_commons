@@ -18,8 +18,6 @@
 %% The Initial Developer of the Original Code is VMware, Inc.
 %% Copyright (c) 2007-2012 VMware, Inc.  All rights reserved.
 %%
--include("types.hrl").
-
 -define(MQTT_PROTO_MAJOR, 3).
 -define(MQTT_PROTO_MINOR, 1).
 
@@ -49,36 +47,36 @@
 -define(CONNACK_CREDENTIALS, 4). %% bad user name or password
 -define(CONNACK_AUTH,        5). %% not authorized
 
--record(mqtt_frame_fixed,    {type   = 0    :: frame_type(),
-                              dup    = false:: flag(),
-                              qos    = 0    :: qos(),
-                              retain = false:: flag()}).
+-record(mqtt_frame_fixed,    {type   = 0    :: byte(),
+                              dup    = false:: true | false,
+                              qos    = 0    :: 0 | 1 | 2,
+                              retain = false:: true | false}).
 
--record(mqtt_frame_connect,  {proto_ver     = ?MQTT_PROTO_MAJOR     :: proto_version(),
-                              will_retain   = false                 :: flag(),
-                              will_qos      = 0                     :: qos(),
-                              will_flag     = false                 :: flag(),
-                              clean_sess    = false                 :: flag(),
+-record(mqtt_frame_connect,  {proto_ver     = ?MQTT_PROTO_MAJOR     :: 3 | 4 | 131,
+                              will_retain   = false                 :: true | false,
+                              will_qos      = 0                     :: 0 | 1 | 2,
+                              will_flag     = false                 :: true | false,
+                              clean_sess    = false                 :: true | false,
                               keep_alive    = 60                    :: non_neg_integer(),
                               client_id     = ""                    :: string() | missing | empty,
-                              will_topic                            :: undefined | topic(),
-                              will_msg                              :: undefined | payload(),
-                              username                              :: undefined | username(),
+                              will_topic                            :: undefined | string(),
+                              will_msg                              :: undefined | binary(),
+                              username                              :: undefined | string(),
                               password                              :: undefined | string()}).
 
--record(mqtt_frame_connack,  {return_code   :: connack_rc()}).
+-record(mqtt_frame_connack,  {return_code   :: 0 | 1 | 2 | 3 | 4 | 5}).
 
--record(mqtt_frame_publish,  {topic_name    :: topic(),
-                              message_id    :: msg_id()}).
+-record(mqtt_frame_publish,  {topic_name    :: string(),
+                              message_id    :: undefined | 1..65535}).
 
--record(mqtt_topic,          {name          :: topic(),
-                              qos           :: qos()}).
+-record(mqtt_topic,          {name          :: string(),
+                              qos           :: 0 | 1 | 2}).
 
--record(mqtt_frame_subscribe,{message_id    :: msg_id(),
+-record(mqtt_frame_subscribe,{message_id    :: 1..65535,
                               topic_table   :: [string() | #mqtt_topic{}]}).
 
--record(mqtt_frame_suback,   {message_id    :: msg_id(),
-                              qos_table = []:: [qos()]}).
+-record(mqtt_frame_suback,   {message_id    :: 1..65535,
+                              qos_table = []:: [0 | 1 | 2]}).
 
 -record(mqtt_frame, {fixed                  :: #mqtt_frame_fixed{},
                      variable               :: #mqtt_frame_connect{}
